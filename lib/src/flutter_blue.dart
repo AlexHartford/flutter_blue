@@ -12,6 +12,8 @@ class FlutterBlue {
   Stream<MethodCall> get _methodStream => _methodStreamController
       .stream; // Used internally to dispatch methods from platform.
 
+  Stream<BluetoothState> _stateStream;
+
   /// Singleton boilerplate
   FlutterBlue._() {
     _channel.setMethodCallHandler((MethodCall call) {
@@ -59,10 +61,12 @@ class FlutterBlue {
         .then((buffer) => new protos.BluetoothState.fromBuffer(buffer))
         .then((s) => BluetoothState.values[s.state.value]);
 
-    yield* _stateChannel
+    _stateStream ??= _stateChannel
         .receiveBroadcastStream()
         .map((buffer) => new protos.BluetoothState.fromBuffer(buffer))
-        .map((s) => BluetoothState.values[s.state.value]);
+        .map((s) => BluetoothState.values[s.state.value]).doOnCancel(() => _stateStream = null);
+
+    yield* _stateStream;
   }
 
   /// Retrieve a list of connected devices
