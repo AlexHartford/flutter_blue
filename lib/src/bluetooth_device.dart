@@ -72,6 +72,8 @@ class BluetoothDevice {
       return list;
     });
 
+    await Future.delayed(Duration(seconds: 1));
+
     await FlutterBlue.instance._channel
         .invokeMethod('discoverServices', id.toString());
 
