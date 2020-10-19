@@ -27,6 +27,10 @@ class FlutterBlue {
   static FlutterBlue _instance = new FlutterBlue._();
   static FlutterBlue get instance => _instance;
 
+  static reinitialize() {
+    _instance = new FlutterBlue._();
+  }
+
   /// Log level of the instance, default is all messages (debug).
   LogLevel _logLevel = LogLevel.debug;
   LogLevel get logLevel => _logLevel;
@@ -42,7 +46,7 @@ class FlutterBlue {
   Stream<bool> get isScanning => _isScanning.stream;
 
   BehaviorSubject<List<ScanResult>> _scanResults = BehaviorSubject.seeded([]);
-  
+
   /// Returns a stream that is a list of [ScanResult] results while a scan is in progress.
   ///
   /// The list emitted is all the scanned results as of the last initiated scan. When a scan is
@@ -64,8 +68,8 @@ class FlutterBlue {
     _stateStream ??= _stateChannel
         .receiveBroadcastStream()
         .map((buffer) => new protos.BluetoothState.fromBuffer(buffer))
-        .map((s) => BluetoothState.values[s.state.value]).doOnCancel(() => _stateStream = null);
-
+        .map((s) => BluetoothState.values[s.state.value])
+        .doOnCancel(() => _stateStream = null);
     yield* _stateStream;
   }
 
@@ -83,6 +87,10 @@ class FlutterBlue {
       // Send the log level to the underlying platforms.
       setLogLevel(logLevel);
     }
+  }
+
+  Future<dynamic> initWithDelegate() {
+    return _channel.invokeMethod('initWithDelegate', {});
   }
 
   /// Starts a scan for Bluetooth Low Energy devices and returns a stream
@@ -149,12 +157,12 @@ class FlutterBlue {
   }
 
   /// Starts a scan and returns a future that will complete once the scan has finished.
-  /// 
+  ///
   /// Once a scan is started, call [stopScan] to stop the scan and complete the returned future.
   ///
   /// timeout automatically stops the scan after a specified [Duration].
   ///
-  /// To observe the results while the scan is in progress, listen to the [scanResults] stream, 
+  /// To observe the results while the scan is in progress, listen to the [scanResults] stream,
   /// or call [scan] instead.
   Future startScan({
     ScanMode scanMode = ScanMode.lowLatency,
